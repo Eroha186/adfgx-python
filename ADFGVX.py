@@ -6,8 +6,8 @@ def generator_matrix():
     Sequence generator
     :return: Returns a random sequence of 36 characters
     """
-    matrix = []
-    [matrix.append(chr(item)) for item in range(ord('A'), ord('Z') + 1)] and [matrix.append(itm) for itm in range(10)]
+    matrix = [' ']
+    [matrix.append(chr(item)) for item in range(ord('а'), ord('я') + 1)] and [matrix.append(itm) for itm in range(10)]
     rd.shuffle(matrix)
     return matrix
 
@@ -22,6 +22,8 @@ def create_table(title):
     matrix = generator_matrix()
     for chr_vertical in title:
         for chr_horizontal in title:
+            if len(matrix) == 0:
+                continue
             table[matrix.pop()] = chr_vertical + chr_horizontal
     return table
 
@@ -70,4 +72,4 @@ def main(title, text, key):
     return text
 
 
-main('ADFGVX', 'POSHLI', 'PRIVET')
+print(main('ABCDIFE', 'привет!', 'добрый'))
