@@ -23,7 +23,7 @@ def create_table(title):
     for chr_vertical in title:
         for chr_horizontal in title:
             if len(matrix) == 0:
-                continue
+                return table
             table[matrix.pop()] = chr_vertical + chr_horizontal
     return table
 
@@ -70,6 +70,3 @@ def main(title, text, key):
     for k in key:
         text += result_text.get(k)
     return text
-
-
-print(main('ABCDIFE', 'привет!', 'добрый'))
