@@ -127,7 +127,20 @@ def write_file(file_name, text):
     with open(file_name, 'w', encoding='utf-8') as file:
         file.write(text)
 
+def randomKey():
+    '''
+    Выполняет рандомную генерацию ключа
+    :return: Ключ
+    '''
+    key = ''
+    for x in range(0, rd.randint(5, 15)):
+        char = alphabet[rd.randint(0, len(alphabet))] 
+        if char != ' ':
+            key += char
 
+    write_file('./key.keys', key)
+
+    return key        
 
 parser = argparse.ArgumentParser(description="ADFGVX шифр", usage="Шифрование: python3 adfgvx.py crypt path_file title_table [-t][--title] [-k][--key] | Дешифрование: python3 adfgvx.py crypt path_file_chiphertext title_table [-t][--title] --key")
 
@@ -146,6 +159,8 @@ except BaseException:
 if arg.action == 'crypt':
     title = arg.title_table
     key = arg.key
+    if key is None:
+        key = randomKey()
     table_key = arg.title
     file_text = arg.path_file
     cipher = main(title, read_file(file_text), key, table_key)
