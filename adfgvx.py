@@ -1,5 +1,6 @@
 import argparse
 import random as rd
+import json
 
 alphabet = 'абвгдеёжзийклмнопрстуфхцчшщъыьэюя '
 
@@ -46,6 +47,11 @@ def generator_table(table_key, title='АБВГДЕ') -> dict:
 
         if matrix_text:  # Если в списке значений есть элементы, тогда добавляем их в таблицу
             table[matrix_text.pop(0)] = itm
+    
+    # Записываем таблицу для шифрования в файл
+    with open("table_for_cipher.json", "w") as write_file:
+        json.dump(table, write_file)   
+      
     return table
 
 
@@ -57,7 +63,6 @@ def text_encryption(title, text, table_key):
     :return: Возвращает зашифрованный текст по таблице
     '''
     table = generator_table(table_key, title)
-    print(table)
     ciphertext = ''
     for i in text:  # Проход по символам текста
         ciphertext += table[i]  # Шифрование одного символа
@@ -66,7 +71,7 @@ def text_encryption(title, text, table_key):
 
 def creating_a_permutation_table(title, text, key, table_key):
     '''
-    Creating a permutation table where the keyword is located in the header
+    Создание таблицы перестановок, в которой ключевое слово находится в заголовке
     :param title: Заголовок таблици (ADFGVX)
     :param text: Текст шифрования
     :param key: Ключ для выполнения перестановки
@@ -80,33 +85,49 @@ def creating_a_permutation_table(title, text, key, table_key):
     return result
 
 
-def permutation(key):
+def sort_key(key):
     '''
     Функция выполняет перестановку
     :param key: Ключ для выполнения перестановки
-    :return: Возвращает вариант перестановки
+    :return: Возвращает отсартированный ключ
     '''
-    key = [i for i in key]  # Создание ключа
-    rd.shuffle(key)  # Перестановка ключа
+    key = sorted([i for i in key])  # Создание ключа
     return key
 
 
-def main(title, text, key, table_key=None):
+def crypt(title, text, key, table_key=None):
     '''
-    Функция запуска основной программы, выполняет конкатенацию текста сверху вниз по каждому столбцу
-    :param title: Заголовок таблици (ADFGVX)
+    Функция запуска шифрующей программы, выполняет конкатенацию текста сверху вниз по каждому столбцу
+    :param title: Заголовок таблицы (ADFGVX)
     :param text: Текст шифрования
     :param key: Ключ для выполнения перестановки
-    :param table_key: Слово для заполнения таблици
-    :return: Возвращает текст таблици
+    :param table_key: Слово для заполнения таблицы
+    :return: Возвращает текст таблицы
     '''
     result_text = creating_a_permutation_table(title, text, key, table_key)
-    key = permutation(key)
+    key = sort_key(key)
     text = ''
+    print(result_text)
     for k in key:
         text += result_text.get(k)
     return text
 
+def decrypt(title, ciphertext, key):
+    '''
+    Функция запуска дешифрующей программы, выполняет конкатенацию текста сверху вниз по каждому столбцу
+    :param title: Заголовок таблицы (ADFGVX)
+    :param text: Текст шифрования
+    :param key: Ключ для выполнения перестановки
+    :return: Возвращает текст таблицы
+    '''
+
+    key = sort_key(key)    
+    result = {}
+    for num, i in enumerate(key * int(len(ciphertext) / len(key))):  # Проход циклом по ключу и нумирация от 0
+        result[i] = result.get(i) + ciphertext[num:num + 1] if result.get(i) else ciphertext[
+                                                                                  num:num + 1]  # Создание таблици для перестановки
+
+    print(result)
 
 def read_file(file_name):
     '''
@@ -142,7 +163,7 @@ def randomKey():
 
     return key        
 
-parser = argparse.ArgumentParser(description="ADFGVX шифр", usage="Шифрование: python3 adfgvx.py crypt path_file title_table [-tk][--table_key] [-k][--key] | Дешифрование: python3 adfgvx.py crypt path_file_chiphertext title_table path_file title_table [-tk][--table_key] [-k][--key]")
+parser = argparse.ArgumentParser(description="ADFGVX шифр", usage="Шифрование: python3 adfgvx.py crypt path_file title_table [-tk][--table_key] [-k][--key] | Дешифрование: python3 adfgvx.py crypt path_file_ciphertext title_table path_file title_table [-tk][--table_key] [-k][--key]")
 
 parser.add_argument("action", help="Аргумент задет режис работы программы crypt/decrypt (шифрование/дешифрование)")
 parser.add_argument("path_file", help="Аргумент указывает с какого файла, брать открытый/закрытый текс")
@@ -163,12 +184,18 @@ if arg.action == 'crypt':
         key = randomKey()
     table_key = arg.table_key
     file_text = arg.path_file
-    cipher = main(title, read_file(file_text), key, table_key)
+    cipher = crypt(title, read_file(file_text), key, table_key)
 
     write_file('encryption.crypt', cipher)
     print(cipher)
 elif arg.action == 'decrypt': 
-    pass
+    title = arg.title_table
+    key = arg.key
+    if key is None:
+        print("Нужен ключ, получить его можно из файла key.keys или использовать ключ, который был использован при шифровании")
+        exit()
+    file_text = arg.path_file
+    open_text = decrypt(title, read_file(file_text), key)    
 else: 
     print("Такого режима не существует")
     parser.print_help()
