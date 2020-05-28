@@ -134,7 +134,7 @@ def randomKey():
     '''
     key = ''
     for x in range(0, rd.randint(5, 15)):
-        char = alphabet[rd.randint(0, len(alphabet))] 
+        char = alphabet[rd.randint(0, len(alphabet) - 1)] 
         if char != ' ':
             key += char
 
@@ -142,12 +142,12 @@ def randomKey():
 
     return key        
 
-parser = argparse.ArgumentParser(description="ADFGVX шифр", usage="Шифрование: python3 adfgvx.py crypt path_file title_table [-t][--title] [-k][--key] | Дешифрование: python3 adfgvx.py crypt path_file_chiphertext title_table [-t][--title] --key")
+parser = argparse.ArgumentParser(description="ADFGVX шифр", usage="Шифрование: python3 adfgvx.py crypt path_file title_table [-tk][--table_key] [-k][--key] | Дешифрование: python3 adfgvx.py crypt path_file_chiphertext title_table path_file title_table [-tk][--table_key] [-k][--key]")
 
 parser.add_argument("action", help="Аргумент задет режис работы программы crypt/decrypt (шифрование/дешифрование)")
 parser.add_argument("path_file", help="Аргумент указывает с какого файла, брать открытый/закрытый текс")
 parser.add_argument("title_table", help="Аргумент, который задет заглавье таблице замен")
-parser.add_argument("-t", "--title", dest="title", help="Не обязательный параметр, который задает режим шифрования. Если парметр указан, то алфавит в таблицу замен вписывает по порядку следования в алфавите после слова-пароля, а если нет, то таблица заполняется рандомно")
+parser.add_argument("-tk", "--table_key", dest="table_key", help="Не обязательный параметр, который задает режим шифрования. Если парметр указан, то алфавит в таблицу замен вписывает по порядку следования в алфавите после слова-пароля, а если нет, то таблица заполняется рандомно")
 parser.add_argument("-k", "--key", dest="key", help="Не обязательный параметр, который задет ключ перестановки. Если указан, то используется то значение, которое указали, а если не указан, то используется сгенерированный ключ, который записывается в файл key.keys")
 
 try:
@@ -161,11 +161,11 @@ if arg.action == 'crypt':
     key = arg.key
     if key is None:
         key = randomKey()
-    table_key = arg.title
+    table_key = arg.table_key
     file_text = arg.path_file
     cipher = main(title, read_file(file_text), key, table_key)
 
-    write_file('encryption.txt', cipher)
+    write_file('encryption.crypt', cipher)
     print(cipher)
 elif arg.action == 'decrypt': 
     pass
