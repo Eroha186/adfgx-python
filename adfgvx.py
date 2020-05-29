@@ -75,11 +75,11 @@ def creating_a_permutation_table(title, text, key, table_key):
     :param title: Заголовок таблици (ADFGVX)
     :param text: Текст шифрования
     :param key: Ключ для выполнения перестановки
-    :return: Возвращает тблицу с заголовком ключа (только по горизонтали)
+    :return: Возвращает таблицу с заголовком ключа (только по горизонтали)
     '''
     ciphertext = text_encryption(title, text, table_key)
     result = {}
-    for num, i in enumerate(key * int(len(ciphertext) / len(key))):  # Проход циклом по ключу и нумирация от 0
+    for num, i in enumerate(key * (int(len(ciphertext) / len(key)) + 1)):  # Проход циклом по ключу и нумирация от 0
         result[i] = result.get(i) + ciphertext[num:num + 1] if result.get(i) else ciphertext[
                                                                                   num:num + 1]  # Создание таблици для перестановки
     return result
@@ -94,6 +94,65 @@ def sort_key(key):
     key = sorted([i for i in key])  # Создание ключа
     return key
 
+def transform_text(text):
+    '''
+    Функция преобразовывает текст в нужную программе форму
+    :param text: Шифротекст для преобразования
+    :return bigramm: Возвращает биграммы преобразованного текста
+    '''
+    key_sorted = sort_key(key)    
+
+    # узнаем сколько букв заполнено в последней строке таблице
+    remainder = len(text) % len(key)
+    
+    len_str_slice = {}
+
+    # Создаем словарь, в котором указано какая длинна столбца соответсвует букве из пароля, не учитывая последнюю строку
+    for i in key:
+        len_str_slice[i] = int(len(text) / len(key))
+
+    # Дополняем словарь с учетом последней строки таблицы
+    if remainder > 0:
+        for i in range(0, remainder):
+            len_str_slice[key[i]] = len_str_slice.get(key[i]) + 1
+    
+    # Нарезаем текст, востанавливая таблицу перестановок
+    num = 0
+    sliced_text = {}
+    for i in key_sorted:
+        sliced_text[i] = text[num: num + len_str_slice[i]]
+        num += len_str_slice[i]        
+
+    # Созадем матрицу, в которую записываем буквы по строчно из таблицы перестановок
+    arr = {}
+    for i in key:
+        num = 0
+        for j in sliced_text[i]:
+            if(arr.get(num) == None):
+                arr.update({ num : j })
+            else:
+                arr[num] += j    
+            num += 1
+
+    # Склеиваем текст
+    text = ''
+    for i in arr:
+        text += arr.get(i)       
+
+    return create_bigramm(text)     
+
+def create_bigramm(text):
+    '''
+    Функция делит строку на биграммы
+    :param text: Текст шифрования
+    :return: список биграмм
+    '''
+    j = 0
+    bigramm = []
+    for i in range(0, int(len(text)/2)):
+        bigramm.append(text[j: j+2])
+        j += 2
+    return bigramm
 
 def crypt(title, text, key, table_key=None):
     '''
@@ -107,7 +166,6 @@ def crypt(title, text, key, table_key=None):
     result_text = creating_a_permutation_table(title, text, key, table_key)
     key = sort_key(key)
     text = ''
-    print(result_text)
     for k in key:
         text += result_text.get(k)
     return text
@@ -118,16 +176,22 @@ def decrypt(title, ciphertext, key):
     :param title: Заголовок таблицы (ADFGVX)
     :param text: Текст шифрования
     :param key: Ключ для выполнения перестановки
-    :return: Возвращает текст таблицы
+    :return: Возвращает расшифрованный текст
     '''
 
-    key = sort_key(key)    
-    result = {}
-    for num, i in enumerate(key * int(len(ciphertext) / len(key))):  # Проход циклом по ключу и нумирация от 0
-        result[i] = result.get(i) + ciphertext[num:num + 1] if result.get(i) else ciphertext[
-                                                                                  num:num + 1]  # Создание таблици для перестановки
+    bigramm = transform_text(ciphertext)
 
-    print(result)
+    # Открываем и записываем в переменную таблицу замен 
+    data = ''
+    with open("table_for_cipher.json", "r") as read_file:
+        data = json.load(read_file)  
+
+    # Меняем ключи и значения местами
+    data_rev = {v:k for k, v in data.items()}      
+    text = ''
+    for item in bigramm: 
+        text += data_rev[item]
+    return text
 
 def read_file(file_name):
     '''
@@ -195,7 +259,8 @@ elif arg.action == 'decrypt':
         print("Нужен ключ, получить его можно из файла key.keys или использовать ключ, который был использован при шифровании")
         exit()
     file_text = arg.path_file
-    open_text = decrypt(title, read_file(file_text), key)    
+    open_text = decrypt(title, read_file(file_text), key)   
+    print(open_text) 
 else: 
     print("Такого режима не существует")
     parser.print_help()
