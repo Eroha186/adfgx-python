@@ -180,12 +180,14 @@ def decrypt(title, ciphertext, key):
     '''
 
     bigramm = transform_text(ciphertext)
-
     # Открываем и записываем в переменную таблицу замен 
     data = ''
-    with open("table_for_cipher.json", "r") as read_file:
-        data = json.load(read_file)  
-
+    try: 
+        
+        with open("table_for_cipher.json", "r") as read_file:
+            data = json.load(read_file)  
+    except FileNotFoundError: 
+        print("Файл с таблицей утерян, создайте новый файл под название table_for_cipher.json. Таблицу нужно записать в корректную json структуру({'AA':'а'})")
     # Меняем ключи и значения местами
     data_rev = {v:k for k, v in data.items()}      
     text = ''
@@ -218,11 +220,11 @@ def randomKey():
     :return: Ключ
     '''
     key = ''
-    for x in range(0, rd.randint(5, 15)):
+    for x in range(0, rd.randint(20, 50)):
         char = alphabet[rd.randint(0, len(alphabet) - 1)] 
         if char != ' ':
             key += char
-
+    key = ''.join(list(set(key)))
     write_file('./key.keys', key)
 
     return key        
@@ -248,18 +250,27 @@ if arg.action == 'crypt':
         key = randomKey()
     table_key = arg.table_key
     file_text = arg.path_file
-    cipher = crypt(title, read_file(file_text), key, table_key)
+    cipher = crypt(title, read_file(file_text).lower(), key, table_key)
 
     write_file('encryption.crypt', cipher)
     print(cipher)
 elif arg.action == 'decrypt': 
     title = arg.title_table
+    
     key = arg.key
     if key is None:
-        print("Нужен ключ, получить его можно из файла key.keys или использовать ключ, который был использован при шифровании")
-        exit()
-    file_text = arg.path_file
-    open_text = decrypt(title, read_file(file_text), key)   
+        try:
+            key = read_file("./key.keys")
+        except FileNotFoundError:
+            print("Файл с ключем потерян, введите ключ вручную")
+            exit()
+
+    try:
+        file_text = read_file(arg.path_file)
+    except FileNotFoundError:
+        print("Файл с сообщением потерян, создайте новый")
+        exit()    
+    open_text = decrypt(title, file_text, key)   
     print(open_text) 
 else: 
     print("Такого режима не существует")
